@@ -1,8 +1,9 @@
 package cyou.wssy001.banish;
 
-import cyou.wssy001.banish.service.UUIDInit;
+import cyou.wssy001.banish.service.ClientInit;
 import lombok.RequiredArgsConstructor;
 import moe.ofs.backend.Plugin;
+import org.springframework.stereotype.Component;
 
 /**
  * @projectName: lava-banish
@@ -13,12 +14,13 @@ import moe.ofs.backend.Plugin;
  * @version: v1.0
  */
 @RequiredArgsConstructor
+@Component
 public class BanishProvider implements Plugin {
-    private final UUIDInit uuidInit;
+    private final ClientInit clientInit;
 
     @Override
     public void register() {
-        uuidInit.generateUUID();
+        clientInit.init();
     }
 
     @Override
