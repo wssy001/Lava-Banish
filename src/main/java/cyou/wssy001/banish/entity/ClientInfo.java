@@ -11,17 +11,10 @@ import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 
-/**
- * <p>
- *
- * </p>
- * @author Tyler
- * @since 2021-01-15
- */
 @Data
 @EqualsAndHashCode(callSuper = false)
 @Accessors(chain = true)
-@ApiModel(value = "ClientInfo对象", description = "")
+@ApiModel(value = "ClientInfo对象")
 public class ClientInfo implements Serializable {
 
     private static final long serialVersionUID = 1L;

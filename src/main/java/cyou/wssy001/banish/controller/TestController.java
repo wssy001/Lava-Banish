@@ -8,7 +8,7 @@ import java.nio.charset.StandardCharsets;
 
 @RestController
 public class TestController {
-    @GetMapping("/test")
+    @GetMapping("/addon/test")
     public String test() {
         return HttpUtil.get("https://www.baidu.com", StandardCharsets.UTF_8);
     }

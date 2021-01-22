@@ -1,31 +1,25 @@
 package cyou.wssy001.banish;
 
 import cyou.wssy001.banish.service.ClientInit;
+import cyou.wssy001.banish.service.ClientShutdown;
 import lombok.RequiredArgsConstructor;
 import moe.ofs.backend.Plugin;
 import org.springframework.stereotype.Component;
 
-/**
- * @projectName: lava-banish
- * @className: BanishProvider
- * @description:
- * @author: alexpetertyler
- * @date: 2021/1/11
- * @version: v1.0
- */
 @RequiredArgsConstructor
 @Component
 public class BanishProvider implements Plugin {
-    private final ClientInit clientInit;
+    private final ClientInit init;
+    private final ClientShutdown shutdown;
 
     @Override
     public void register() {
-        clientInit.init();
+        init.init();
     }
 
     @Override
     public void unregister() {
-
+        shutdown.shutdown();
     }
 
     @Override
