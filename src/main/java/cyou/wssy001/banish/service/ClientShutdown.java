@@ -1,6 +1,7 @@
 package cyou.wssy001.banish.service;
 
 import lombok.RequiredArgsConstructor;
+import moe.ofs.backend.discipline.service.PlayerConnectionValidationService;
 import org.springframework.stereotype.Service;
 
 /**
@@ -14,8 +15,13 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class ClientShutdown {
+    private final PlayerConnectionValidationService playerConnectionValidationService;
 
     public void shutdown() {
+        unblockPlayer();
+    }
 
+    private void unblockPlayer() {
+        playerConnectionValidationService.unblockPlayerUcid("interceptor");
     }
 }

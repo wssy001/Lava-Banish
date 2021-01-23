@@ -5,8 +5,6 @@ import cyou.wssy001.banish.dao.ClientInfoDao;
 import cyou.wssy001.banish.entity.ClientInfo;
 import lombok.RequiredArgsConstructor;
 import moe.ofs.backend.discipline.service.PlayerConnectionValidationService;
-import moe.ofs.backend.hookinterceptor.HookInterceptorDefinition;
-import moe.ofs.backend.hookinterceptor.HookInterceptorProcessService;
 import org.springframework.stereotype.Service;
 
 /**
@@ -33,7 +31,7 @@ public class ClientInit {
         ClientInfo clientInfo = clientInfoDao.selectOne(null);
         if (checkClientInfo(clientInfo)) throw new RuntimeException("请联系作者获取密钥！");
 
-        registerHook();
+        blockPlayer();
     }
 
     private boolean checkClientInfo(ClientInfo clientInfo) {
@@ -41,7 +39,8 @@ public class ClientInit {
         return !StrUtil.hasBlank(clientInfo.getClientPrivateKey(), clientInfo.getClientPublicKey(), clientInfo.getServerPublicKey());
     }
 
-    private void registerHook() {
+
+    private void blockPlayer() {
 
         playerConnectionValidationService.blockPlayerUcid("interceptor");
     }
