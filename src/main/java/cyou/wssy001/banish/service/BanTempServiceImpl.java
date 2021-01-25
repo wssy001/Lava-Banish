@@ -85,8 +85,15 @@ public class BanTempServiceImpl extends AbstractMapService<BanTemp> implements B
 
         if (size == 0) return 0;
 
-        stream.findFirst().ifPresent(this::delete);
+        stream.findFirst().ifPresent(v -> {
+            forgive(v.getId());
+        });
         return 1;
+    }
+
+    private void forgive(Long id) {
+        Optional<BanTemp> banTemp = findById(id);
+        banLogDao.selectById(banTemp.)
     }
 
     @Override

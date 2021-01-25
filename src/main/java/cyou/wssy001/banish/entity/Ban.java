@@ -56,5 +56,4 @@ public class Ban implements Serializable {
     @Version
     private Integer version;
 
-
 }
