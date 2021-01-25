@@ -50,7 +50,7 @@ public class ClientInit {
         return !StrUtil.hasBlank(clientInfo.getClientPrivateKey(), clientInfo.getClientPublicKey(), clientInfo.getServerPublicKey());
     }
 
-    // 加载封禁玩家
+    // 导入封禁玩家
     private void blockPlayer() {
         List<Ban> banList = banDao.selectList(null);
         List<BanNetwork> banNetworkList = banNetworkDao.selectList(null);
@@ -62,7 +62,6 @@ public class ClientInit {
 
         Map<Object, String> ban = banList.stream().collect(Collectors.toMap(Ban::getUcid, Ban::getReason));
         banNetworkList.forEach(v -> ban.put(v.getUcid(), v.getReason()));
-
 
         playerConnectionValidationService.blockPlayerUcid(ban);
     }

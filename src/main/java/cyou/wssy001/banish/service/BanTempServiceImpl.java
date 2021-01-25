@@ -10,6 +10,7 @@ import cyou.wssy001.banish.entity.BanLog;
 import lombok.RequiredArgsConstructor;
 import moe.ofs.backend.common.AbstractMapService;
 import org.springframework.lang.NonNull;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -46,22 +47,22 @@ public class BanTempServiceImpl extends AbstractMapService<BanTemp> implements B
 
     @Override
     public long forgive(String victimPlayerUCID) {
-        DateTime time = DateUtil.offsetMinute(new Date(), -1);
-        return forgive(victimPlayerUCID, time);
+        DateTime preMinute = DateUtil.offsetMinute(new Date(), -1);
+        return forgive(victimPlayerUCID, preMinute);
     }
 
     @Override
-    public long forgive(String victimPlayerUCID, Date time) {
-        return forgive(victimPlayerUCID, time, false);
+    public long forgive(String victimPlayerUCID, Date preTime) {
+        return forgive(victimPlayerUCID, preTime, false);
     }
 
     @Override
     public long forgiveAll(String victimPlayerUCID) {
-        DateTime minute = DateUtil.offsetMinute(new Date(), 1);
-        return forgive(victimPlayerUCID, minute, true);
+        DateTime preMinute = DateUtil.offsetMinute(new Date(), -1);
+        return forgive(victimPlayerUCID, preMinute, true);
     }
 
-    private long forgive(String victimPlayerUCID, @NonNull Date time, boolean isAll) {
+    private long forgive(String victimPlayerUCID, @NonNull Date preTime, boolean isAll) {
 
         Stream<BanTemp> stream = findAll().stream().filter(banTemp -> banTemp.getVictimPlayerUCID().equals(victimPlayerUCID));
         long size = stream.count();
@@ -78,7 +79,7 @@ public class BanTempServiceImpl extends AbstractMapService<BanTemp> implements B
             return size;
         }
 
-        stream = stream.filter(banTemp -> DateUtil.isIn(new Date(), time, banTemp.getDecline()))
+        stream = stream.filter(banTemp -> DateUtil.isIn(banTemp.getDecline(), preTime, new Date()))
                 .sorted(Comparator.comparing(BanTemp::getDecline).reversed());
         size = stream.count();
 
@@ -90,22 +91,22 @@ public class BanTempServiceImpl extends AbstractMapService<BanTemp> implements B
 
     @Override
     public long punish(String victimPlayerUCID) {
-        DateTime minute = DateUtil.offsetMinute(new Date(), 1);
-        return punish(victimPlayerUCID, minute);
+        DateTime preMinute = DateUtil.offsetMinute(new Date(), -1);
+        return punish(victimPlayerUCID, preMinute);
     }
 
     @Override
-    public long punish(String victimPlayerUCID, Date time) {
-        return punish(victimPlayerUCID, time, false);
+    public long punish(String victimPlayerUCID, Date preTime) {
+        return punish(victimPlayerUCID, preTime, false);
     }
 
     @Override
     public long punishAll(String victimPlayerUCID) {
-        DateTime minute = DateUtil.offsetMinute(new Date(), 1);
-        return punish(victimPlayerUCID, minute, true);
+        DateTime preMinute = DateUtil.offsetMinute(new Date(), -1);
+        return punish(victimPlayerUCID, preMinute, true);
     }
 
-    public long punish(String victimPlayerUCID, @NonNull Date time, boolean isAll) {
+    public long punish(String victimPlayerUCID, @NonNull Date preTime, boolean isAll) {
 
         Stream<BanTemp> stream = findAll().stream().filter(banTemp -> banTemp.getVictimPlayerUCID().equals(victimPlayerUCID));
         long size = stream.count();
@@ -122,7 +123,7 @@ public class BanTempServiceImpl extends AbstractMapService<BanTemp> implements B
             return size;
         }
 
-        stream = stream.filter(banTemp -> DateUtil.isIn(new Date(), time, banTemp.getDecline()))
+        stream = stream.filter(banTemp -> DateUtil.isIn(banTemp.getDecline(), preTime, new Date()))
                 .sorted(Comparator.comparing(BanTemp::getDecline).reversed());
         size = stream.count();
 
@@ -130,5 +131,25 @@ public class BanTempServiceImpl extends AbstractMapService<BanTemp> implements B
 
         stream.findFirst().ifPresent(this::delete);
         return 1;
+    }
+
+    @Override
+    @Scheduled(fixedDelay = 1000L)
+    public void dispose() {
+        if (getNextId() == 1) return;
+
+        Date now = new Date();
+        DateTime preMinute = DateUtil.offsetMinute(now, -1);
+        Stream<BanTemp> banTempStream = findAll()
+                .stream()
+                .filter(banTemp -> !DateUtil.isIn(banTemp.getDecline(), preMinute, now));
+
+        if (banTempStream.count() == 0) return;
+
+        banTempStream
+                .forEach(record -> {
+                    deleteById(record.getId());
+
+                });
     }
 }

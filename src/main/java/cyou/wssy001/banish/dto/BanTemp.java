@@ -18,6 +18,7 @@ import java.util.Date;
 @Getter
 @Setter
 public class BanTemp extends BaseEntity {
+    private Long dbId;
     private String killerUCID;
     private String victimPlayerUCID;
     private Date time;

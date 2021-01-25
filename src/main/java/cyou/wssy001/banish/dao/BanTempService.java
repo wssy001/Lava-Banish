@@ -1,6 +1,7 @@
 package cyou.wssy001.banish.dao;
 
 import cyou.wssy001.banish.dto.BanTemp;
+import org.springframework.scheduling.annotation.Scheduled;
 
 import java.util.Date;
 import java.util.List;
@@ -36,4 +37,7 @@ public interface BanTempService {
 
     // 惩罚当前所有TK的凶手
     long punishAll(String victimPlayerUCID);
+
+    void dispose();
+
 }

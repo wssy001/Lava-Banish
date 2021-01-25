@@ -42,7 +42,7 @@ public class DCSTKEventService {
         BanTemp banTemp = new BanTemp();
         DateTime time = DateUtil.parseTime(event.getTime() * 1000 + "");
         banTemp.setTime(time);
-        banTemp.setId(banLog.getId());
+        banTemp.setDbId(banLog.getId());
         banTemp.setKillerUCID(killer.getUcid());
         banTemp.setVictimPlayerUCID(victim.getUcid());
         banTempService.add(banTemp);
