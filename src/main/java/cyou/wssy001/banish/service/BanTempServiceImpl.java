@@ -3,12 +3,15 @@ package cyou.wssy001.banish.service;
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import cyou.wssy001.banish.dao.BanDao;
 import cyou.wssy001.banish.dao.BanLogDao;
 import cyou.wssy001.banish.dao.BanTempService;
 import cyou.wssy001.banish.dto.BanTemp;
+import cyou.wssy001.banish.entity.Ban;
 import cyou.wssy001.banish.entity.BanLog;
 import lombok.RequiredArgsConstructor;
 import moe.ofs.backend.common.AbstractMapService;
+import moe.ofs.backend.discipline.service.PlayerConnectionValidationService;
 import org.springframework.lang.NonNull;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -28,6 +31,8 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public class BanTempServiceImpl extends AbstractMapService<BanTemp> implements BanTempService {
     private final BanLogDao banLogDao;
+    private final BanDao banDao;
+    private final PlayerConnectionValidationService playerConnectionValidationService;
 
     @Override
     public Set<BanTemp> findAll() {
@@ -85,15 +90,16 @@ public class BanTempServiceImpl extends AbstractMapService<BanTemp> implements B
 
         if (size == 0) return 0;
 
-        stream.findFirst().ifPresent(v -> {
-            forgive(v.getId());
-        });
+        stream.findFirst().ifPresent(v -> forgive(v.getId()));
         return 1;
     }
 
     private void forgive(Long id) {
-        Optional<BanTemp> banTemp = findById(id);
-        banLogDao.selectById(banTemp.)
+        BanTemp banTemp = findById(id).get();
+        BanLog banLog = banLogDao.selectById(banTemp.getDbId());
+        banLog.setNote("玩家原谅");
+        banLogDao.updateById(banLog);
+        delete(banTemp);
     }
 
     @Override
@@ -123,10 +129,11 @@ public class BanTempServiceImpl extends AbstractMapService<BanTemp> implements B
         Set<Long> ids = new HashSet<>();
         if (isAll) {
             stream.forEach(banTemp -> {
-                ids.add(banTemp.getId());
+                ids.add(banTemp.getDbId());
                 delete(banTemp);
             });
             banLogDao.update(null, Wrappers.<BanLog>lambdaUpdate().set(BanLog::getNote, "惩罚").in(BanLog::getId, ids));
+            punish(ids);
             return size;
         }
 
@@ -136,8 +143,26 @@ public class BanTempServiceImpl extends AbstractMapService<BanTemp> implements B
 
         if (size == 0) return 0;
 
-        stream.findFirst().ifPresent(this::delete);
+        stream.findFirst().ifPresent(v -> punish(v.getId()));
         return 1;
+    }
+
+    private void punish(Set<Long> idSet) {
+        List<BanLog> banLogs = banLogDao.selectBatchIds(idSet);
+
+    }
+
+    private void punish(Long id) {
+        BanTemp banTemp = findById(id).get();
+        BanLog banLog = banLogDao.selectById(banTemp.getDbId());
+        banLog.setNote("惩罚");
+        banLogDao.updateById(banLog);
+        delete(banTemp);
+
+        Ban ban = new Ban(banLog.getUcid(), banLog.getIpaddr(), banLog.getName(), new Date());
+        ban.setReason("您被ban了，如有异议，请联系管理员并附带有效证据");
+        banDao.insert(ban);
+        playerConnectionValidationService.blockPlayerUcid(ban.getUcid(), ban.getReason());
     }
 
     @Override
@@ -153,10 +178,6 @@ public class BanTempServiceImpl extends AbstractMapService<BanTemp> implements B
 
         if (banTempStream.count() == 0) return;
 
-        banTempStream
-                .forEach(record -> {
-                    deleteById(record.getId());
-
-                });
+        banTempStream.forEach(record -> punish(record.getId()));
     }
 }

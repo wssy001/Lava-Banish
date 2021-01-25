@@ -1,10 +1,13 @@
 package cyou.wssy001.banish.entity;
 
+import cn.hutool.core.date.DateTime;
+import cn.hutool.core.date.DateUtil;
 import com.baomidou.mybatisplus.annotation.*;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
@@ -14,6 +17,7 @@ import java.util.Date;
 @EqualsAndHashCode(callSuper = false)
 @Accessors(chain = true)
 @ApiModel(value = "Ban对象")
+@NoArgsConstructor
 public class Ban implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -56,4 +60,19 @@ public class Ban implements Serializable {
     @Version
     private Integer version;
 
+    public Ban(String ucid, String ipaddr, String name, Date bannedFrom, Date bannedUntil) {
+        this.ucid = ucid;
+        this.ipaddr = ipaddr;
+        this.name = name;
+        this.bannedFrom = bannedFrom;
+        this.bannedUntil = bannedUntil;
+    }
+
+    public Ban(String ucid, String ipaddr, String name, Date bannedFrom) {
+        this.ucid = ucid;
+        this.ipaddr = ipaddr;
+        this.name = name;
+        this.bannedFrom = bannedFrom;
+        this.bannedUntil = DateUtil.nextMonth();
+    }
 }
