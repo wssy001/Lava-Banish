@@ -1,4 +1,4 @@
-package cyou.wssy001.banish.service;
+package cyou.wssy001.banish;
 
 import cn.hutool.core.util.StrUtil;
 import cyou.wssy001.banish.dao.ClientInfoDao;
@@ -6,6 +6,8 @@ import cyou.wssy001.banish.entity.ClientInfo;
 import lombok.RequiredArgsConstructor;
 import moe.ofs.backend.discipline.service.PlayerConnectionValidationService;
 import org.springframework.stereotype.Service;
+
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @projectName: lava-banish
@@ -20,6 +22,7 @@ import org.springframework.stereotype.Service;
 public class ClientInit {
     private final ClientInfoDao clientInfoDao;
     private final PlayerConnectionValidationService playerConnectionValidationService;
+    private ConcurrentHashMap<Object, Object> concurrentHashMap;
 
     public void init() {
         clientRegister();
@@ -34,14 +37,19 @@ public class ClientInit {
         blockPlayer();
     }
 
+    // 校验客户端信息
     private boolean checkClientInfo(ClientInfo clientInfo) {
         if (clientInfo == null) return false;
         return !StrUtil.hasBlank(clientInfo.getClientPrivateKey(), clientInfo.getClientPublicKey(), clientInfo.getServerPublicKey());
     }
 
-
+    // 加载封禁玩家
     private void blockPlayer() {
 
         playerConnectionValidationService.blockPlayerUcid("interceptor");
+    }
+
+    private void initMap() {
+
     }
 }

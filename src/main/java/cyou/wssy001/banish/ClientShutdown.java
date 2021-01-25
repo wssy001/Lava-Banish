@@ -1,4 +1,4 @@
-package cyou.wssy001.banish.service;
+package cyou.wssy001.banish;
 
 import lombok.RequiredArgsConstructor;
 import moe.ofs.backend.discipline.service.PlayerConnectionValidationService;

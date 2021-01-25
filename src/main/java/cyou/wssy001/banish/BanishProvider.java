@@ -1,7 +1,5 @@
 package cyou.wssy001.banish;
 
-import cyou.wssy001.banish.service.ClientInit;
-import cyou.wssy001.banish.service.ClientShutdown;
 import lombok.RequiredArgsConstructor;
 import moe.ofs.backend.Plugin;
 import org.springframework.stereotype.Component;
