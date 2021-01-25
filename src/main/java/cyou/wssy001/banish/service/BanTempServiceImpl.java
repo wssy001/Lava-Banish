@@ -9,12 +9,10 @@ import cyou.wssy001.banish.dto.BanTemp;
 import cyou.wssy001.banish.entity.BanLog;
 import lombok.RequiredArgsConstructor;
 import moe.ofs.backend.common.AbstractMapService;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Stream;
 
 /**
@@ -31,19 +29,25 @@ public class BanTempServiceImpl extends AbstractMapService<BanTemp> implements B
     private final BanLogDao banLogDao;
 
     @Override
-    public void save(List<BanTemp> banTempList) {
-        banTempList.forEach(this::save);
-    }
-
-    @Override
     public Set<BanTemp> findAll() {
         if (getNextId() == 1) throw new RuntimeException("数据为空");
         return new HashSet<>(this.map.values());
     }
 
     @Override
+    public void add(BanTemp banTemp) {
+        save(banTemp);
+    }
+
+    @Override
+    public void add(List<BanTemp> banTempList) {
+        banTempList.forEach(this::save);
+    }
+
+    @Override
     public long forgive(String victimPlayerUCID) {
-        return forgive(victimPlayerUCID, null);
+        DateTime time = DateUtil.offsetMinute(new Date(), -1);
+        return forgive(victimPlayerUCID, time);
     }
 
     @Override
@@ -57,8 +61,7 @@ public class BanTempServiceImpl extends AbstractMapService<BanTemp> implements B
         return forgive(victimPlayerUCID, minute, true);
     }
 
-    private long forgive(String victimPlayerUCID, Date time, boolean isAll) {
-        final Date beginTime = time == null ? DateUtil.offsetMinute(new Date(), 1) : time;
+    private long forgive(String victimPlayerUCID, @NonNull Date time, boolean isAll) {
 
         Stream<BanTemp> stream = findAll().stream().filter(banTemp -> banTemp.getVictimPlayerUCID().equals(victimPlayerUCID));
         long size = stream.count();
@@ -75,18 +78,20 @@ public class BanTempServiceImpl extends AbstractMapService<BanTemp> implements B
             return size;
         }
 
-        stream = stream.filter(banTemp -> DateUtil.isIn(new Date(), beginTime, banTemp.getDecline()));
+        stream = stream.filter(banTemp -> DateUtil.isIn(new Date(), time, banTemp.getDecline()))
+                .sorted(Comparator.comparing(BanTemp::getDecline).reversed());
         size = stream.count();
 
         if (size == 0) return 0;
 
-        stream.forEach(this::delete);
-        return size;
+        stream.findFirst().ifPresent(this::delete);
+        return 1;
     }
 
     @Override
     public long punish(String victimPlayerUCID) {
-        return punish(victimPlayerUCID, null);
+        DateTime minute = DateUtil.offsetMinute(new Date(), 1);
+        return punish(victimPlayerUCID, minute);
     }
 
     @Override
@@ -96,11 +101,11 @@ public class BanTempServiceImpl extends AbstractMapService<BanTemp> implements B
 
     @Override
     public long punishAll(String victimPlayerUCID) {
-        return punish(victimPlayerUCID, null, true);
+        DateTime minute = DateUtil.offsetMinute(new Date(), 1);
+        return punish(victimPlayerUCID, minute, true);
     }
 
-    public long punish(String victimPlayerUCID, Date time, boolean isAll) {
-        final Date beginTime = time == null ? DateUtil.offsetMinute(new Date(), 1) : time;
+    public long punish(String victimPlayerUCID, @NonNull Date time, boolean isAll) {
 
         Stream<BanTemp> stream = findAll().stream().filter(banTemp -> banTemp.getVictimPlayerUCID().equals(victimPlayerUCID));
         long size = stream.count();
@@ -117,12 +122,13 @@ public class BanTempServiceImpl extends AbstractMapService<BanTemp> implements B
             return size;
         }
 
-        stream = stream.filter(banTemp -> DateUtil.isIn(new Date(), beginTime, banTemp.getDecline()));
+        stream = stream.filter(banTemp -> DateUtil.isIn(new Date(), time, banTemp.getDecline()))
+                .sorted(Comparator.comparing(BanTemp::getDecline).reversed());
         size = stream.count();
 
         if (size == 0) return 0;
 
-        stream.forEach(this::delete);
-        return size;
+        stream.findFirst().ifPresent(this::delete);
+        return 1;
     }
-}o
+}

@@ -22,6 +22,6 @@ public class ClientShutdown {
     }
 
     private void unblockPlayer() {
-        playerConnectionValidationService.unblockPlayerUcid("interceptor");
+        playerConnectionValidationService.unblockPlayerAll();
     }
 }
