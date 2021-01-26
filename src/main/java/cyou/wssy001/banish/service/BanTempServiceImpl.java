@@ -17,6 +17,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -148,7 +149,17 @@ public class BanTempServiceImpl extends AbstractMapService<BanTemp> implements B
     }
 
     private void punish(Set<Long> idSet) {
-        List<BanLog> banLogs = banLogDao.selectBatchIds(idSet);
+        Map<Object, String> map;
+        Stream<BanTemp> banTempStream = findAll().stream().filter(v -> idSet.contains(v.getId()));
+        if (banTempStream.count() == 0) return;
+        map = banTempStream.collect(Collectors.toMap(BanTemp::getKillerUCID, v -> "您被ban了，如有异议，请联系管理员并附带有效证据"));
+        playerConnectionValidationService.blockPlayerUcid(map);
+
+        banLogDao.selectBatchIds(idSet).forEach(v -> {
+            Ban ban = new Ban(v.getUcid(), v.getIpaddr(), v.getName(), new Date());
+            ban.setReason("您被ban了，如有异议，请联系管理员并附带有效证据");
+            banDao.insert(ban);
+        });
 
     }
 
