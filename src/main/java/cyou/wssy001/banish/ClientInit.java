@@ -8,7 +8,10 @@ import cyou.wssy001.banish.entity.Ban;
 import cyou.wssy001.banish.entity.BanNetwork;
 import cyou.wssy001.banish.entity.ClientInfo;
 import lombok.RequiredArgsConstructor;
+import moe.ofs.backend.chatcmdnew.model.ChatCommandDefinition;
+import moe.ofs.backend.chatcmdnew.services.ChatCommandSetManageService;
 import moe.ofs.backend.discipline.service.PlayerConnectionValidationService;
+import moe.ofs.backend.function.triggermessage.services.NetMessageService;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -31,10 +34,13 @@ public class ClientInit {
     private final BanNetworkDao banNetworkDao;
     private final ClientInfoDao clientInfoDao;
     private final PlayerConnectionValidationService playerConnectionValidationService;
+    private final ChatCommandSetManageService chatCommandSetManageService;
+    private final NetMessageService netMessageService;
 
     public void init() {
         clientRegister();
         blockPlayer();
+        addChatCMD();
     }
 
     // 客户端注册
@@ -64,6 +70,25 @@ public class ClientInit {
         banNetworkList.forEach(v -> ban.put(v.getUcid(), v.getReason()));
 
         playerConnectionValidationService.blockPlayerUcid(ban);
+    }
+
+    // 添加聊天指令
+    private void addChatCMD() {
+        ChatCommandDefinition forgive=ChatCommandDefinition.builder()
+                .name("forgive one person")
+                .keyword("/forgive")
+                .description("当然是选择原谅Ta /斜眼笑")
+                .consumer(chatCommandProcessEntity -> {
+                    String keyword = chatCommandProcessEntity.getKeyword();
+//                    PlayerInfo playerInfo = chatCommandProcessEntity.getPlayer();
+//                    TriggerMessage message = TriggerMessage.builder()
+//                            .receiverGroupId(0)
+//                            .message(playerInfo.toString())
+//                            .build();
+//                    netMessageService.sendNetMessageForPlayer(message, playerInfo);
+                })
+                .build();
+        chatCommandSetManageService.addCommandDefinition(forgive);
     }
 
 }
