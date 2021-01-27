@@ -7,11 +7,12 @@ import cyou.wssy001.banish.dao.ClientInfoDao;
 import cyou.wssy001.banish.entity.Ban;
 import cyou.wssy001.banish.entity.BanNetwork;
 import cyou.wssy001.banish.entity.ClientInfo;
+import cyou.wssy001.banish.service.BanishPlayerForgiveService;
+import cyou.wssy001.banish.service.BanishPlayerPunishService;
 import lombok.RequiredArgsConstructor;
 import moe.ofs.backend.chatcmdnew.model.ChatCommandDefinition;
 import moe.ofs.backend.chatcmdnew.services.ChatCommandSetManageService;
 import moe.ofs.backend.discipline.service.PlayerConnectionValidationService;
-import moe.ofs.backend.function.triggermessage.services.NetMessageService;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -33,9 +34,12 @@ public class ClientInit {
     private final BanDao banDao;
     private final BanNetworkDao banNetworkDao;
     private final ClientInfoDao clientInfoDao;
+
+    private final BanishPlayerForgiveService banishPlayerForgiveService;
+    private final BanishPlayerPunishService banishPlayerPunishService;
+
     private final PlayerConnectionValidationService playerConnectionValidationService;
     private final ChatCommandSetManageService chatCommandSetManageService;
-    private final NetMessageService netMessageService;
 
     public void init() {
         clientRegister();
@@ -74,21 +78,22 @@ public class ClientInit {
 
     // 添加聊天指令
     private void addChatCMD() {
-        ChatCommandDefinition forgive=ChatCommandDefinition.builder()
-                .name("forgive one person")
+        ChatCommandDefinition forgive = ChatCommandDefinition.builder()
+                .name("forgive player")
                 .keyword("/forgive")
                 .description("当然是选择原谅Ta /斜眼笑")
-                .consumer(chatCommandProcessEntity -> {
-                    String keyword = chatCommandProcessEntity.getKeyword();
-//                    PlayerInfo playerInfo = chatCommandProcessEntity.getPlayer();
-//                    TriggerMessage message = TriggerMessage.builder()
-//                            .receiverGroupId(0)
-//                            .message(playerInfo.toString())
-//                            .build();
-//                    netMessageService.sendNetMessageForPlayer(message, playerInfo);
-                })
+                .consumer(banishPlayerForgiveService::forgivePlayer)
                 .build();
+
+        ChatCommandDefinition punish = ChatCommandDefinition.builder()
+                .name("punish bad guy")
+                .keyword("/punish")
+                .description("惩罚")
+                .consumer(banishPlayerForgiveService::forgivePlayer)
+                .build();
+
         chatCommandSetManageService.addCommandDefinition(forgive);
+        chatCommandSetManageService.addCommandDefinition(punish);
     }
 
 }

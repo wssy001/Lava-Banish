@@ -8,6 +8,7 @@ import cyou.wssy001.banish.dto.BanTemp;
 import cyou.wssy001.banish.entity.BanLog;
 import lombok.RequiredArgsConstructor;
 import moe.ofs.backend.annotations.ListenLavaEvent;
+import moe.ofs.backend.discipline.service.PlayerDisciplineService;
 import moe.ofs.backend.domain.dcs.poll.PlayerInfo;
 import moe.ofs.backend.domain.events.EventType;
 import moe.ofs.backend.domain.events.LavaEvent;
@@ -26,13 +27,17 @@ import org.springframework.stereotype.Service;
 public class DCSTKEventService {
     private final BanLogDao banLogDao;
     private final BanTempService banTempService;
+    private final PlayerDisciplineService disciplineService;
 
     @ListenLavaEvent(EventType.KILL)
     public void tkEvent(LavaEvent event) {
         PlayerInfo killer = event.getInitiatorPlayer();
         PlayerInfo victim = event.getTargetPlayer();
+
+        if (killer == null || victim == null) return;
         if (killer.getSide() != victim.getSide()) return;
 
+        disciplineService.kick(killer, "本服严禁TK，你有1分钟的时间取得受害者的谅解");
         BanLog banLog = new BanLog();
         banLog.setIpaddr(killer.getIpaddr());
         banLog.setUcid(killer.getUcid());
