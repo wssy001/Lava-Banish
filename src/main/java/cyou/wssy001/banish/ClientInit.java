@@ -8,6 +8,7 @@ import cyou.wssy001.banish.entity.Ban;
 import cyou.wssy001.banish.entity.BanNetwork;
 import cyou.wssy001.banish.entity.ClientInfo;
 import cyou.wssy001.banish.service.BanishPlayerForgiveService;
+import cyou.wssy001.banish.service.BanishPlayerHelpService;
 import cyou.wssy001.banish.service.BanishPlayerPunishService;
 import lombok.RequiredArgsConstructor;
 import moe.ofs.backend.chatcmdnew.model.ChatCommandDefinition;
@@ -37,6 +38,7 @@ public class ClientInit {
 
     private final BanishPlayerForgiveService banishPlayerForgiveService;
     private final BanishPlayerPunishService banishPlayerPunishService;
+    private final BanishPlayerHelpService banishPlayerHelpService;
 
     private final PlayerConnectionValidationService playerConnectionValidationService;
     private final ChatCommandSetManageService chatCommandSetManageService;
@@ -78,6 +80,13 @@ public class ClientInit {
 
     // 添加聊天指令
     private void addChatCMD() {
+        ChatCommandDefinition help = ChatCommandDefinition.builder()
+                .name("help")
+                .keyword("/help banish")
+                .description("指令帮助")
+                .consumer(banishPlayerHelpService::helpPlayer)
+                .build();
+
         ChatCommandDefinition forgive = ChatCommandDefinition.builder()
                 .name("forgive player")
                 .keyword("/forgive")
@@ -89,9 +98,10 @@ public class ClientInit {
                 .name("punish bad guy")
                 .keyword("/punish")
                 .description("惩罚")
-                .consumer(banishPlayerForgiveService::forgivePlayer)
+                .consumer(banishPlayerPunishService::punishPlayer)
                 .build();
 
+        chatCommandSetManageService.addCommandDefinition(help);
         chatCommandSetManageService.addCommandDefinition(forgive);
         chatCommandSetManageService.addCommandDefinition(punish);
     }

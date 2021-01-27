@@ -15,10 +15,10 @@ import org.springframework.stereotype.Service;
  */
 @Service
 @RequiredArgsConstructor
-public class BanishPlayerPunishService {
+public class BanishPlayerHelpService {
     private final NetMessageService netMessageService;
 
-    public void punishPlayer(ChatCommandProcessEntity chatCommandProcessEntity) {
-
+    public void helpPlayer(ChatCommandProcessEntity chatCommandProcessEntity) {
+        netMessageService.sendNetMessageToAll("这是帮助内容：\n");
     }
 }
