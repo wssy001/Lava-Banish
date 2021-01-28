@@ -1,8 +1,7 @@
 package cyou.wssy001.banish.service;
 
-import cn.hutool.core.date.DateTime;
-import cn.hutool.core.date.DateUtil;
 import cyou.wssy001.banish.dao.BanTempService;
+import cyou.wssy001.banish.util.BanishDateUtil;
 import lombok.RequiredArgsConstructor;
 import moe.ofs.backend.chatcmdnew.model.ChatCommandProcessEntity;
 import moe.ofs.backend.domain.dcs.poll.PlayerInfo;
@@ -34,7 +33,7 @@ public class BanishPlayerForgiveService {
                 break;
             case 2:
                 String s1 = s[1];
-                DateTime time;
+                Date time;
                 if (s1.equalsIgnoreCase("all")) {
                     long l1 = banTempService.forgiveAll(ucid);
                     if (l1 > 0) {
@@ -43,16 +42,9 @@ public class BanishPlayerForgiveService {
                         msg = "您还没有TK记录";
                     }
                     break;
-                } else if (s1.contains("分钟")) {
-                    Integer minute = Integer.getInteger(s1.replace("分钟", ""));
-                    time = DateUtil.offsetMinute(new Date(), minute);
-                } else if (s1.contains("小时")) {
-                    Integer hour = Integer.getInteger(s1.replace("小时", ""));
-                    time = DateUtil.offsetMinute(new Date(), hour);
-                } else {
-                    msg = "您输入的参数有误，请查证";
-                    break;
                 }
+
+                time = BanishDateUtil.convertToDate(s1);
                 long l1 = banTempService.forgive(ucid, time);
 
                 if (l1 > 0) {

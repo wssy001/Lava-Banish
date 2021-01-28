@@ -19,6 +19,14 @@ public class BanishPlayerHelpService {
     private final NetMessageService netMessageService;
 
     public void helpPlayer(ChatCommandProcessEntity chatCommandProcessEntity) {
-        netMessageService.sendNetMessageToAll("这是帮助内容：\n");
+
+        String help = "这是帮助内容：\n" +
+                "/forgive 快速原谅一分钟内产生的TK" +
+                "/forgive 1【h/小时/min/分钟/mon/月/min/分钟】 原谅过去时间内产生的一次TK*" +
+                "/forgive all 原谅所有TK" +
+                "/punish 快速惩罚一分钟内产生的TK" +
+                "/punish 1【h/小时/min/分钟/mon/月/min/分钟】 惩罚过去时间内产生的一次TK*" +
+                "/punish all 原谅所有TK";
+        netMessageService.sendNetMessageForPlayer(help, chatCommandProcessEntity.getPlayer());
     }
 }
