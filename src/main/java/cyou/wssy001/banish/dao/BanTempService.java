@@ -1,7 +1,6 @@
 package cyou.wssy001.banish.dao;
 
-import cyou.wssy001.banish.dto.BanTemp;
-import org.springframework.scheduling.annotation.Scheduled;
+import cyou.wssy001.banish.entity.BanTemp;
 
 import java.util.Date;
 import java.util.List;

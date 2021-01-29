@@ -6,7 +6,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import cyou.wssy001.banish.dao.BanDao;
 import cyou.wssy001.banish.dao.BanLogDao;
 import cyou.wssy001.banish.dao.BanTempService;
-import cyou.wssy001.banish.dto.BanTemp;
+import cyou.wssy001.banish.entity.BanTemp;
 import cyou.wssy001.banish.entity.Ban;
 import cyou.wssy001.banish.entity.BanLog;
 import lombok.RequiredArgsConstructor;

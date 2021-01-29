@@ -4,7 +4,7 @@ import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
 import cyou.wssy001.banish.dao.BanLogDao;
 import cyou.wssy001.banish.dao.BanTempService;
-import cyou.wssy001.banish.dto.BanTemp;
+import cyou.wssy001.banish.entity.BanTemp;
 import cyou.wssy001.banish.entity.BanLog;
 import lombok.RequiredArgsConstructor;
 import moe.ofs.backend.annotations.ListenLavaEvent;

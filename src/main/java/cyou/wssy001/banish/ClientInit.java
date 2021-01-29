@@ -1,12 +1,15 @@
 package cyou.wssy001.banish;
 
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import cyou.wssy001.banish.dao.BanDao;
 import cyou.wssy001.banish.dao.BanNetworkDao;
 import cyou.wssy001.banish.dao.ClientInfoDao;
 import cyou.wssy001.banish.entity.Ban;
 import cyou.wssy001.banish.entity.BanNetwork;
+import cyou.wssy001.banish.entity.BanishConfig;
 import cyou.wssy001.banish.entity.ClientInfo;
+import cyou.wssy001.banish.service.BanishConfigServiceImpl;
 import cyou.wssy001.banish.service.BanishPlayerForgiveService;
 import cyou.wssy001.banish.service.BanishPlayerHelpService;
 import cyou.wssy001.banish.service.BanishPlayerPunishService;
@@ -39,27 +42,54 @@ public class ClientInit {
     private final BanishPlayerForgiveService banishPlayerForgiveService;
     private final BanishPlayerPunishService banishPlayerPunishService;
     private final BanishPlayerHelpService banishPlayerHelpService;
+    private final BanishConfigServiceImpl banishConfigService;
 
     private final PlayerConnectionValidationService playerConnectionValidationService;
     private final ChatCommandSetManageService chatCommandSetManageService;
 
     public void init() {
-        clientRegister();
+        loadConfig();
         blockPlayer();
         addChatCMD();
     }
 
-    // 客户端注册
-    private void clientRegister() {
-        ClientInfo clientInfo = clientInfoDao.selectOne(null);
-        if (checkClientInfo(clientInfo)) throw new RuntimeException("请联系作者获取密钥！");
+    // 加载配置
+    private void loadConfig() {
+        List<ClientInfo> clientInfos = clientInfoDao.selectList(null);
+        if (clientInfos.size() != 1) {
+            clientInfoDao.delete(null);
+            throw new RuntimeException("请检查库表中的配置项");
+        }
 
+        ClientInfo clientInfo = clientInfos.get(0);
+        if (!checkClientInfo(clientInfo)) throw new RuntimeException("请联系作者获取密钥！");
+
+        BanishConfig banishConfig = new BanishConfig();
+        banishConfig.setUuid(clientInfo.getUuid());
+        banishConfig.setServerPublicKey(clientInfo.getServerPublicKey());
+        banishConfig.setClientPrivateKey(clientInfo.getClientPrivateKey());
+        banishConfig.setClientPublicKey(clientInfo.getClientPublicKey());
+
+        clientRegister(banishConfig);
     }
 
     // 校验客户端信息
     private boolean checkClientInfo(ClientInfo clientInfo) {
         if (clientInfo == null) return false;
-        return !StrUtil.hasBlank(clientInfo.getClientPrivateKey(), clientInfo.getClientPublicKey(), clientInfo.getServerPublicKey());
+        if (StrUtil.hasBlank(clientInfo.getClientPrivateKey(), clientInfo.getClientPublicKey(), clientInfo.getServerPublicKey()))
+            return false;
+        if (StrUtil.isBlank(clientInfo.getUuid())) {
+            clientInfo.setUuid(IdUtil.fastSimpleUUID());
+            clientInfoDao.updateById(clientInfo);
+        }
+        return true;
+    }
+
+    // 客户端注册
+    private void clientRegister(BanishConfig banishConfig) {
+//        TODO 信息联网校验
+
+        banishConfigService.save(banishConfig);
     }
 
     // 导入封禁玩家

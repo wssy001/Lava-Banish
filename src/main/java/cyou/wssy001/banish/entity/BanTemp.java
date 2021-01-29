@@ -1,4 +1,4 @@
-package cyou.wssy001.banish.dto;
+package cyou.wssy001.banish.entity;
 
 import cn.hutool.core.date.DateUtil;
 import lombok.Getter;
