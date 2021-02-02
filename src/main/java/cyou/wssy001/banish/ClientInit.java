@@ -28,7 +28,6 @@ import org.springframework.stereotype.Service;
 
 import javax.sql.DataSource;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -114,11 +113,9 @@ public class ClientInit {
         SymmetricCrypto sm4 = SmUtil.sm4(banishConfig.getServerPublicKey().substring(0, 16).getBytes());
         String encryptHex = sm4.encryptHex(jsonString);
 
-        Map<String, String> map = new HashMap<>();
-        map.put("uuid", banishConfig.getUuid());
-        map.put("crypt", encryptHex);
-
-        String post = HttpUtil.post(banishConfig.getServerAddress() + "/client/verify", JSON.toJSONString(map), 3000);
+        clientInfoDto.setCrypt(encryptHex);
+        String s = JSON.toJSONString(clientInfoDto);
+        String post = HttpUtil.post(banishConfig.getServerAddress() + "/client/verify", s, 3000);
         if (post.equals("失败")) throw new RuntimeException("客户端配置验证失败");
 
         banishConfigService.save(banishConfig);
