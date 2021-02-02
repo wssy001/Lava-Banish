@@ -16,8 +16,16 @@ import moe.ofs.backend.domain.dcs.BaseEntity;
 @Setter
 public class BanishConfig extends BaseEntity {
     private String uuid;
+    private String clientName;
     private String clientPrivateKey;
     private String clientPublicKey;
     private String serverPublicKey;
+    //    天
+    private Integer punishTime = 30;
+    //    分钟
+    private Integer thinkingTime = 1;
+    //    分钟
+    private Integer recordsSearchTime = 1;
 
+    private String serverAddress;
 }

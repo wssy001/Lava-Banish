@@ -36,10 +36,13 @@ public class ClientInfo implements Serializable {
     @ApiModelProperty(value = "服务器公钥")
     private String serverPublicKey;
 
+    private String serverAddress;
+
     public ClientInfo(String uuid) {
         this.uuid = uuid;
         this.clientPrivateKey = "";
         this.serverPublicKey = "";
         this.clientPublicKey = "";
     }
+
 }

@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 import java.util.Optional;
 
 @Service
-public class BanishConfigServiceImpl extends AbstractMapService<BanishConfig> {
+public class BanishConfigService extends AbstractMapService<BanishConfig> {
     @Override
     public BanishConfig save(BanishConfig object) {
         if (object == null) {
@@ -27,8 +27,15 @@ public class BanishConfigServiceImpl extends AbstractMapService<BanishConfig> {
         if (object.getServerPublicKey() != null) config.setServerPublicKey(object.getServerPublicKey());
         if (object.getClientPrivateKey() != null) config.setClientPrivateKey(object.getClientPrivateKey());
         if (object.getClientPublicKey() != null) config.setClientPublicKey(object.getClientPublicKey());
-//        if (object.getUuid() != null) config.setUuid(object.getUuid());
-//        if (object.getUuid() != null) config.setUuid(object.getUuid());
+        if (object.getPunishTime() != null) config.setPunishTime(object.getPunishTime());
+        if (object.getThinkingTime() != null) config.setThinkingTime(object.getThinkingTime());
         return save(object);
+    }
+
+    public BanishConfig find() {
+        Optional<BanishConfig> config = findById(1L);
+        boolean present = config.isPresent();
+        if (present) return config.get();
+        throw new RuntimeException("没有配置文件，请检查！");
     }
 }

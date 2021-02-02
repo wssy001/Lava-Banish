@@ -2,24 +2,33 @@ package cyou.wssy001.banish;
 
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.crypto.SmUtil;
+import cn.hutool.crypto.symmetric.SymmetricCrypto;
+import cn.hutool.http.HttpUtil;
+import com.alibaba.fastjson.JSON;
+import com.baomidou.dynamic.datasource.DynamicRoutingDataSource;
 import cyou.wssy001.banish.dao.BanDao;
 import cyou.wssy001.banish.dao.BanNetworkDao;
 import cyou.wssy001.banish.dao.ClientInfoDao;
+import cyou.wssy001.banish.dto.ClientInfoDto;
 import cyou.wssy001.banish.entity.Ban;
 import cyou.wssy001.banish.entity.BanNetwork;
 import cyou.wssy001.banish.entity.BanishConfig;
 import cyou.wssy001.banish.entity.ClientInfo;
-import cyou.wssy001.banish.service.BanishConfigServiceImpl;
+import cyou.wssy001.banish.service.BanishConfigService;
 import cyou.wssy001.banish.service.BanishPlayerForgiveService;
 import cyou.wssy001.banish.service.BanishPlayerHelpService;
 import cyou.wssy001.banish.service.BanishPlayerPunishService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import moe.ofs.backend.chatcmdnew.model.ChatCommandDefinition;
 import moe.ofs.backend.chatcmdnew.services.ChatCommandSetManageService;
 import moe.ofs.backend.discipline.service.PlayerConnectionValidationService;
 import org.springframework.stereotype.Service;
 
+import javax.sql.DataSource;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -34,6 +43,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ClientInit {
     private final BanDao banDao;
     private final BanNetworkDao banNetworkDao;
@@ -42,10 +52,13 @@ public class ClientInit {
     private final BanishPlayerForgiveService banishPlayerForgiveService;
     private final BanishPlayerPunishService banishPlayerPunishService;
     private final BanishPlayerHelpService banishPlayerHelpService;
-    private final BanishConfigServiceImpl banishConfigService;
+    private final BanishConfigService banishConfigService;
 
     private final PlayerConnectionValidationService playerConnectionValidationService;
     private final ChatCommandSetManageService chatCommandSetManageService;
+
+    private final DynamicRoutingDataSource ds;
+    private final DataSource banishDataSource;
 
     public void init() {
         loadConfig();
@@ -55,6 +68,9 @@ public class ClientInit {
 
     // 加载配置
     private void loadConfig() {
+
+        ds.addDataSource("banish", banishDataSource);
+
         List<ClientInfo> clientInfos = clientInfoDao.selectList(null);
         if (clientInfos.size() != 1) {
             clientInfoDao.delete(null);
@@ -69,7 +85,10 @@ public class ClientInit {
         banishConfig.setServerPublicKey(clientInfo.getServerPublicKey());
         banishConfig.setClientPrivateKey(clientInfo.getClientPrivateKey());
         banishConfig.setClientPublicKey(clientInfo.getClientPublicKey());
-
+        banishConfig.setThinkingTime(1);
+        banishConfig.setPunishTime(30);
+        banishConfig.setRecordsSearchTime(1);
+        banishConfig.setServerAddress(clientInfo.getServerAddress());
         clientRegister(banishConfig);
     }
 
@@ -87,7 +106,20 @@ public class ClientInit {
 
     // 客户端注册
     private void clientRegister(BanishConfig banishConfig) {
-//        TODO 信息联网校验
+        ClientInfoDto clientInfoDto = new ClientInfoDto();
+        clientInfoDto.setClientName(banishConfig.getClientName());
+        clientInfoDto.setClientPublicKey(banishConfig.getClientPublicKey());
+        clientInfoDto.setServerPublicKey(banishConfig.getServerPublicKey());
+        String jsonString = JSON.toJSONString(clientInfoDto);
+        SymmetricCrypto sm4 = SmUtil.sm4(banishConfig.getServerPublicKey().substring(0, 16).getBytes());
+        String encryptHex = sm4.encryptHex(jsonString);
+
+        Map<String, String> map = new HashMap<>();
+        map.put("uuid", banishConfig.getUuid());
+        map.put("crypt", encryptHex);
+
+        String post = HttpUtil.post(banishConfig.getServerAddress() + "/client/verify", JSON.toJSONString(map), 3000);
+        if (post.equals("失败")) throw new RuntimeException("客户端配置验证失败");
 
         banishConfigService.save(banishConfig);
     }
@@ -120,7 +152,7 @@ public class ClientInit {
         ChatCommandDefinition forgive = ChatCommandDefinition.builder()
                 .name("forgive player")
                 .keyword("/forgive")
-                .description("当然是选择原谅Ta /斜眼笑")
+                .description("当然是选择原谅Ta")
                 .consumer(banishPlayerForgiveService::forgivePlayer)
                 .build();
 

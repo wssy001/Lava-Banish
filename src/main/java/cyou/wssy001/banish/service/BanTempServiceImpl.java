@@ -6,9 +6,10 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import cyou.wssy001.banish.dao.BanDao;
 import cyou.wssy001.banish.dao.BanLogDao;
 import cyou.wssy001.banish.dao.BanTempService;
-import cyou.wssy001.banish.entity.BanTemp;
 import cyou.wssy001.banish.entity.Ban;
 import cyou.wssy001.banish.entity.BanLog;
+import cyou.wssy001.banish.entity.BanTemp;
+import cyou.wssy001.banish.entity.BanishConfig;
 import lombok.RequiredArgsConstructor;
 import moe.ofs.backend.common.AbstractMapService;
 import moe.ofs.backend.discipline.service.PlayerConnectionValidationService;
@@ -34,6 +35,7 @@ public class BanTempServiceImpl extends AbstractMapService<BanTemp> implements B
     private final BanLogDao banLogDao;
     private final BanDao banDao;
     private final PlayerConnectionValidationService playerConnectionValidationService;
+    private final BanishConfigService banishConfigService;
 
     @Override
     public Set<BanTemp> findAll() {
@@ -53,7 +55,8 @@ public class BanTempServiceImpl extends AbstractMapService<BanTemp> implements B
 
     @Override
     public long forgive(String victimPlayerUCID) {
-        DateTime preMinute = DateUtil.offsetMinute(new Date(), -1);
+        BanishConfig banishConfig = banishConfigService.find();
+        DateTime preMinute = DateUtil.offsetMinute(new Date(), -banishConfig.getRecordsSearchTime());
         return forgive(victimPlayerUCID, preMinute);
     }
 
@@ -64,7 +67,8 @@ public class BanTempServiceImpl extends AbstractMapService<BanTemp> implements B
 
     @Override
     public long forgiveAll(String victimPlayerUCID) {
-        DateTime preMinute = DateUtil.offsetMinute(new Date(), -1);
+        BanishConfig banishConfig = banishConfigService.find();
+        DateTime preMinute = DateUtil.offsetMinute(new Date(), -banishConfig.getRecordsSearchTime());
         return forgive(victimPlayerUCID, preMinute, true);
     }
 
@@ -96,11 +100,10 @@ public class BanTempServiceImpl extends AbstractMapService<BanTemp> implements B
     }
 
     private void forgive(Long id) {
-        BanTemp banTemp = findById(id).get();
-        BanLog banLog = banLogDao.selectById(banTemp.getDbId());
+        BanLog banLog = banLogDao.selectById(id);
         banLog.setNote("玩家原谅");
         banLogDao.updateById(banLog);
-        delete(banTemp);
+        delete(findById(id).get());
     }
 
     @Override
@@ -116,7 +119,8 @@ public class BanTempServiceImpl extends AbstractMapService<BanTemp> implements B
 
     @Override
     public long punishAll(String victimPlayerUCID) {
-        DateTime preMinute = DateUtil.offsetMinute(new Date(), -1);
+        BanishConfig banishConfig = banishConfigService.find();
+        DateTime preMinute = DateUtil.offsetMinute(new Date(), -banishConfig.getRecordsSearchTime());
         return punish(victimPlayerUCID, preMinute, true);
     }
 
@@ -130,7 +134,7 @@ public class BanTempServiceImpl extends AbstractMapService<BanTemp> implements B
         Set<Long> ids = new HashSet<>();
         if (isAll) {
             stream.forEach(banTemp -> {
-                ids.add(banTemp.getDbId());
+                ids.add(banTemp.getId());
                 delete(banTemp);
             });
             banLogDao.update(null, Wrappers.<BanLog>lambdaUpdate().set(BanLog::getNote, "惩罚").in(BanLog::getId, ids));
@@ -148,41 +152,45 @@ public class BanTempServiceImpl extends AbstractMapService<BanTemp> implements B
         return 1;
     }
 
-    private void punish(Set<Long> idSet) {
+    public void punish(Set<Long> idSet) {
         Map<Object, String> map;
         Stream<BanTemp> banTempStream = findAll().stream().filter(v -> idSet.contains(v.getId()));
         if (banTempStream.count() == 0) return;
         map = banTempStream.collect(Collectors.toMap(BanTemp::getKillerUCID, v -> "您被ban了，如有异议，请联系管理员并附带有效证据"));
         playerConnectionValidationService.blockPlayerUcid(map);
 
+        BanishConfig banishConfig = banishConfigService.find();
+        DateTime day = DateUtil.offsetDay(new Date(), banishConfig.getPunishTime());
         banLogDao.selectBatchIds(idSet).forEach(v -> {
-            Ban ban = new Ban(v.getUcid(), v.getIpaddr(), v.getName(), new Date());
+            Ban ban = new Ban(v.getUcid(), v.getIpaddr(), v.getName(), new Date(), day);
             ban.setReason("您被ban了，如有异议，请联系管理员并附带有效证据");
             banDao.insert(ban);
         });
 
     }
 
-    private void punish(Long id) {
-        BanTemp banTemp = findById(id).get();
-        BanLog banLog = banLogDao.selectById(banTemp.getDbId());
+    public void punish(Long id) {
+        BanLog banLog = banLogDao.selectById(id);
         banLog.setNote("惩罚");
         banLogDao.updateById(banLog);
-        delete(banTemp);
+        delete(findById(id).get());
 
-        Ban ban = new Ban(banLog.getUcid(), banLog.getIpaddr(), banLog.getName(), new Date());
+        BanishConfig banishConfig = banishConfigService.find();
+        DateTime day = DateUtil.offsetDay(new Date(), banishConfig.getPunishTime());
+        Ban ban = new Ban(banLog.getUcid(), banLog.getIpaddr(), banLog.getName(), new Date(), day);
         ban.setReason("您被ban了，如有异议，请联系管理员并附带有效证据");
         banDao.insert(ban);
         playerConnectionValidationService.blockPlayerUcid(ban.getUcid(), ban.getReason());
     }
 
     @Override
-    @Scheduled(fixedDelay = 1000L)
+    @Scheduled(fixedDelay = 60 * 1000L)
     public void dispose() {
         if (getNextId() == 1) return;
 
         Date now = new Date();
-        DateTime preMinute = DateUtil.offsetMinute(now, -1);
+        BanishConfig banishConfig = banishConfigService.find();
+        DateTime preMinute = DateUtil.offsetMinute(now, -banishConfig.getThinkingTime());
         Stream<BanTemp> banTempStream = findAll()
                 .stream()
                 .filter(banTemp -> !DateUtil.isIn(banTemp.getDecline(), preMinute, now));

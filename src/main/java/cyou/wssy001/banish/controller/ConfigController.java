@@ -1,9 +1,10 @@
 package cyou.wssy001.banish.controller;
 
 import cyou.wssy001.banish.entity.BanishConfig;
-import cyou.wssy001.banish.service.BanishConfigServiceImpl;
+import cyou.wssy001.banish.service.BanishConfigService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -17,10 +18,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 public class ConfigController {
-    private final BanishConfigServiceImpl banishConfigService;
+    private final BanishConfigService banishConfigService;
 
     @GetMapping("/update")
-    public String updateConfig(BanishConfig banishConfig) {
-        banishConfigService.
+    public String updateConfig(@RequestBody BanishConfig banishConfig) {
+        banishConfigService.update(banishConfig);
+        return "成功!";
     }
 }

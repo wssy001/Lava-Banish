@@ -1,7 +1,5 @@
 package cyou.wssy001.banish.entity;
 
-import cn.hutool.core.date.DateTime;
-import cn.hutool.core.date.DateUtil;
 import com.baomidou.mybatisplus.annotation.*;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -66,13 +64,5 @@ public class Ban implements Serializable {
         this.name = name;
         this.bannedFrom = bannedFrom;
         this.bannedUntil = bannedUntil;
-    }
-
-    public Ban(String ucid, String ipaddr, String name, Date bannedFrom) {
-        this.ucid = ucid;
-        this.ipaddr = ipaddr;
-        this.name = name;
-        this.bannedFrom = bannedFrom;
-        this.bannedUntil = DateUtil.nextMonth();
     }
 }
