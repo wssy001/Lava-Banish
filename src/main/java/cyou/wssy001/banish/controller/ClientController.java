@@ -6,6 +6,7 @@ import cyou.wssy001.banish.entity.BanNetwork;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequiredArgsConstructor
+@RequestMapping("/banish")
 public class ClientController {
     private final BanNetworkDao banNetworkDao;
 
@@ -25,6 +27,6 @@ public class ClientController {
     public void banNetUpdate(@RequestBody BanishList<BanNetwork> banNetworkList) {
 
         banNetworkDao.delete(null);
-        banNetworkList.forEach(banNetworkDao::insert);
+        banNetworkList.getList().forEach(banNetworkDao::insert);
     }
 }

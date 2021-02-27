@@ -1,7 +1,8 @@
-package cyou.wssy001.banish.entity;
+package cyou.wssy001.banish.dto;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.experimental.Accessors;
 import moe.ofs.backend.domain.dcs.BaseEntity;
 
 /**
@@ -12,8 +13,9 @@ import moe.ofs.backend.domain.dcs.BaseEntity;
  * @date: 2021/1/29
  * @version: v1.0
  */
-@Getter
-@Setter
+@Data
+@EqualsAndHashCode(callSuper = false)
+@Accessors(chain = true)
 public class BanishConfig extends BaseEntity {
     private String uuid;
     private String clientName;
@@ -28,4 +30,14 @@ public class BanishConfig extends BaseEntity {
     private Integer recordsSearchTime = 1;
 
     private String serverAddress;
+
+    private String databaseUrl;
+    private String databaseUsername;
+    private String databasePassword;
+    private Long idleTimeout;
+    private Long connectionTimeout;
+    private Long maxLifetime;
+    private Integer maxPoolSize;
+    private Integer minIdle;
+
 }

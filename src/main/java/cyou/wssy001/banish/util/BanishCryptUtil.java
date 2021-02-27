@@ -2,7 +2,7 @@ package cyou.wssy001.banish.util;
 
 import cn.hutool.core.util.HexUtil;
 import cn.hutool.crypto.asymmetric.SM2;
-import cyou.wssy001.banish.entity.BanishConfig;
+import cyou.wssy001.banish.dto.BanishConfig;
 import cyou.wssy001.banish.service.BanishConfigService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;

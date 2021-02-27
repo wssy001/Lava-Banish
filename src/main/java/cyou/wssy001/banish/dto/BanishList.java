@@ -1,10 +1,12 @@
 package cyou.wssy001.banish.dto;
 
 import io.swagger.annotations.ApiModelProperty;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.experimental.Accessors;
 
-import java.util.ArrayList;
+import java.io.Serializable;
+import java.util.List;
 
 /**
  * @projectName: lava-banish
@@ -14,15 +16,13 @@ import java.util.ArrayList;
  * @date: 2021/2/2
  * @version: v1.0
  */
-@Setter
-@Getter
-public class BanishList<E> extends ArrayList<E> {
+@Data
+@EqualsAndHashCode(callSuper = false)
+@Accessors(chain = true)
+public class BanishList<T> extends BaseDto implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     @ApiModelProperty(value = "客户端UUID")
-    private String clientUUID;
+    private List<T> list;
 
-    @ApiModelProperty(value = "SM2签名")
-    private String sign;
-
-    @ApiModelProperty(value = "SM4加密")
-    private String crypt;
 }

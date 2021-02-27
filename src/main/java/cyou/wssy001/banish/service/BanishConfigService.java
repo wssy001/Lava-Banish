@@ -1,6 +1,6 @@
 package cyou.wssy001.banish.service;
 
-import cyou.wssy001.banish.entity.BanishConfig;
+import cyou.wssy001.banish.dto.BanishConfig;
 import moe.ofs.backend.common.AbstractMapService;
 import org.springframework.stereotype.Service;
 

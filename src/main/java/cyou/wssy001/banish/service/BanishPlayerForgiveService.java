@@ -1,6 +1,5 @@
 package cyou.wssy001.banish.service;
 
-import cyou.wssy001.banish.dao.BanTempService;
 import cyou.wssy001.banish.util.BanishDateUtil;
 import lombok.RequiredArgsConstructor;
 import moe.ofs.backend.chatcmdnew.model.ChatCommandProcessEntity;

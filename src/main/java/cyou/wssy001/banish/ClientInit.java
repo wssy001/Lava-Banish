@@ -10,10 +10,10 @@ import com.baomidou.dynamic.datasource.DynamicRoutingDataSource;
 import cyou.wssy001.banish.dao.BanDao;
 import cyou.wssy001.banish.dao.BanNetworkDao;
 import cyou.wssy001.banish.dao.ClientInfoDao;
+import cyou.wssy001.banish.dto.BanishConfig;
 import cyou.wssy001.banish.dto.ClientInfoDto;
 import cyou.wssy001.banish.entity.Ban;
 import cyou.wssy001.banish.entity.BanNetwork;
-import cyou.wssy001.banish.entity.BanishConfig;
 import cyou.wssy001.banish.entity.ClientInfo;
 import cyou.wssy001.banish.service.BanishConfigService;
 import cyou.wssy001.banish.service.BanishPlayerForgiveService;
@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import moe.ofs.backend.chatcmdnew.model.ChatCommandDefinition;
 import moe.ofs.backend.chatcmdnew.services.ChatCommandSetManageService;
 import moe.ofs.backend.discipline.service.PlayerConnectionValidationService;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 import javax.sql.DataSource;
@@ -58,15 +59,22 @@ public class ClientInit {
 
     private final DynamicRoutingDataSource ds;
     private final DataSource banishDataSource;
+    private final Environment environment;
 
     public void init() {
-        loadConfig();
-        blockPlayer();
-        addChatCMD();
+        try {
+            loadConfig();
+            blockPlayer();
+            addChatCMD();
+        } catch (Exception e) {
+            log.info("******Banish运行错误：" + e.getMessage());
+        }
     }
 
     // 加载配置
     private void loadConfig() {
+
+
 
         ds.addDataSource("banish", banishDataSource);
 
@@ -109,6 +117,10 @@ public class ClientInit {
         clientInfoDto.setClientName(banishConfig.getClientName());
         clientInfoDto.setClientPublicKey(banishConfig.getClientPublicKey());
         clientInfoDto.setServerPublicKey(banishConfig.getServerPublicKey());
+        clientInfoDto.setClientUUID(banishConfig.getUuid());
+        String port = environment.getProperty("server.port");
+        if (StrUtil.isBlank(port)) port = "8080";
+        clientInfoDto.setClientPort(port);
         String jsonString = JSON.toJSONString(clientInfoDto);
         SymmetricCrypto sm4 = SmUtil.sm4(banishConfig.getServerPublicKey().substring(0, 16).getBytes());
         String encryptHex = sm4.encryptHex(jsonString);
@@ -141,7 +153,7 @@ public class ClientInit {
     private void addChatCMD() {
         ChatCommandDefinition help = ChatCommandDefinition.builder()
                 .name("help")
-                .keyword("/help banish")
+                .keyword("/banish help")
                 .description("指令帮助")
                 .consumer(banishPlayerHelpService::helpPlayer)
                 .build();

@@ -46,7 +46,7 @@ public class BanNetwork implements Serializable {
     private Date updateTime;
 
     @ApiModelProperty(value = "是否启用")
-    @TableLogic
+    @TableLogic(value = "true", delval = "false")
     private Boolean enable;
 
     @ApiModelProperty(value = "乐观锁")

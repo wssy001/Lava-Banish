@@ -22,6 +22,8 @@ public class BanTemp extends BaseEntity {
     private String victimPlayerUCID;
     private Date time;
     private Date decline;
+    private String killerPhotoId;
+    private String victimPhotoId;
 
     public void setTime(Date time) {
         setTime(time, 1);

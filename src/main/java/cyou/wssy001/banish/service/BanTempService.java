@@ -1,6 +1,5 @@
-package cyou.wssy001.banish.dao;
+package cyou.wssy001.banish.service;
 
-import com.baomidou.dynamic.datasource.annotation.DS;
 import cyou.wssy001.banish.entity.BanTemp;
 
 import java.util.Date;
@@ -15,7 +14,6 @@ import java.util.List;
  * @version: v1.0
  */
 
-@DS("banish")
 public interface BanTempService {
 
     void add(BanTemp banTemp);

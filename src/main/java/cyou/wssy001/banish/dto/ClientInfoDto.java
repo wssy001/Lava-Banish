@@ -21,8 +21,8 @@ import java.io.Serializable;
 public class ClientInfoDto extends BaseDto implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    @ApiModelProperty(value = "IP地址")
-    private String ipAddress;
+    @ApiModelProperty(value = "客户端端口")
+    private String clientPort;
 
     @ApiModelProperty(value = "客户端名称")
     private String clientName;

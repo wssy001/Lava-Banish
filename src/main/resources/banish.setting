@@ -1,0 +1,35 @@
+# ---------------------------------
+# ----- Setting File with UTF8-----
+# -----     Banish配置文件     -----
+# ---------------------------------
+
+
+[主要]
+#唯一ID
+uuid = {uuid}
+#客户端名称
+clientName = {clientName}
+#客户端私钥
+clientPrivateKey = {clientPrivateKey}
+#客户端公钥
+clientPublicKey = {clientPublicKey}
+#服务器公钥
+serverPublicKey = {serverPublicKey}
+
+[数据库]
+#数据库地址，必须 如 localhost:3306
+url = {url}
+#数据库名称，必须
+dbName = {dbName}
+#用户名，必须
+userName = {userName}
+#密码，必须，如果密码为空，请填写 pass =
+password = {password}
+
+[功能]
+#惩罚时间，对于TK玩家，快速处罚的处罚时间，单位：天
+punishTime = 30
+#考虑时间，对于玩家产生TK，给予该名玩家一定的时间乞求受害者的原谅，单位：分钟
+thinkingTime = 1
+#记录查询时间，玩家在服务器中，可查询之前时间内的记录，单位：分钟
+recordsSearchTime = 1

@@ -2,24 +2,34 @@ package cyou.wssy001.banish.service;
 
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
+import cn.hutool.http.HttpUtil;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import cyou.wssy001.banish.dao.BanDao;
 import cyou.wssy001.banish.dao.BanLogDao;
-import cyou.wssy001.banish.dao.BanTempService;
+import cyou.wssy001.banish.dto.BanDto;
+import cyou.wssy001.banish.dto.BanishConfig;
+import cyou.wssy001.banish.dto.BanishList;
 import cyou.wssy001.banish.entity.Ban;
 import cyou.wssy001.banish.entity.BanLog;
 import cyou.wssy001.banish.entity.BanTemp;
-import cyou.wssy001.banish.entity.BanishConfig;
+import cyou.wssy001.banish.util.BanishCryptUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import moe.ofs.backend.common.AbstractMapService;
+import moe.ofs.backend.connector.DcsScriptConfigManager;
 import moe.ofs.backend.discipline.service.PlayerConnectionValidationService;
 import org.springframework.lang.NonNull;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.net.URL;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * @projectName: lava-banish
@@ -31,6 +41,7 @@ import java.util.stream.Stream;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class BanTempServiceImpl extends AbstractMapService<BanTemp> implements BanTempService {
     private final BanLogDao banLogDao;
     private final BanDao banDao;
@@ -74,14 +85,17 @@ public class BanTempServiceImpl extends AbstractMapService<BanTemp> implements B
 
     private long forgive(String victimPlayerUCID, @NonNull Date preTime, boolean isAll) {
 
-        Stream<BanTemp> stream = findAll().stream().filter(banTemp -> banTemp.getVictimPlayerUCID().equals(victimPlayerUCID));
-        long size = stream.count();
+        List<BanTemp> collect = findAll()
+                .stream()
+                .filter(banTemp -> banTemp.getVictimPlayerUCID().equals(victimPlayerUCID))
+                .collect(Collectors.toList());
+        long size = collect.size();
 
         if (size == 0) return 0;
 
         Set<Long> ids = new HashSet<>();
         if (isAll) {
-            stream.forEach(banTemp -> {
+            collect.forEach(banTemp -> {
                 ids.add(banTemp.getId());
                 delete(banTemp);
             });
@@ -89,13 +103,15 @@ public class BanTempServiceImpl extends AbstractMapService<BanTemp> implements B
             return size;
         }
 
-        stream = stream.filter(banTemp -> DateUtil.isIn(banTemp.getDecline(), preTime, new Date()))
-                .sorted(Comparator.comparing(BanTemp::getDecline).reversed());
-        size = stream.count();
+        collect = collect
+                .stream()
+                .filter(banTemp -> DateUtil.isIn(banTemp.getDecline(), preTime, new Date()))
+                .sorted(Comparator.comparing(BanTemp::getDecline).reversed())
+                .collect(Collectors.toList());
 
-        if (size == 0) return 0;
+        if (collect.size() == 0) return 0;
 
-        stream.findFirst().ifPresent(v -> forgive(v.getId()));
+        forgive(collect.get(0).getId());
         return 1;
     }
 
@@ -103,7 +119,7 @@ public class BanTempServiceImpl extends AbstractMapService<BanTemp> implements B
         BanLog banLog = banLogDao.selectById(id);
         banLog.setNote("玩家原谅");
         banLogDao.updateById(banLog);
-        delete(findById(id).get());
+        deleteById(id);
     }
 
     @Override
@@ -125,15 +141,13 @@ public class BanTempServiceImpl extends AbstractMapService<BanTemp> implements B
     }
 
     public long punish(String victimPlayerUCID, @NonNull Date preTime, boolean isAll) {
-
-        Stream<BanTemp> stream = findAll().stream().filter(banTemp -> banTemp.getVictimPlayerUCID().equals(victimPlayerUCID));
-        long size = stream.count();
-
+        List<BanTemp> collect = findAll().stream().filter(banTemp -> banTemp.getVictimPlayerUCID().equals(victimPlayerUCID)).collect(Collectors.toList());
+        long size = collect.size();
         if (size == 0) return 0;
 
         Set<Long> ids = new HashSet<>();
         if (isAll) {
-            stream.forEach(banTemp -> {
+            collect.forEach(banTemp -> {
                 ids.add(banTemp.getId());
                 delete(banTemp);
             });
@@ -142,22 +156,24 @@ public class BanTempServiceImpl extends AbstractMapService<BanTemp> implements B
             return size;
         }
 
-        stream = stream.filter(banTemp -> DateUtil.isIn(banTemp.getDecline(), preTime, new Date()))
-                .sorted(Comparator.comparing(BanTemp::getDecline).reversed());
-        size = stream.count();
+        collect = collect.stream().filter(banTemp -> DateUtil.isIn(banTemp.getTime(), preTime, new Date()))
+                .sorted(Comparator.comparing(BanTemp::getDecline).reversed()).collect(Collectors.toList());
 
-        if (size == 0) return 0;
+        if (collect.size() == 0) return 0;
 
-        stream.findFirst().ifPresent(v -> punish(v.getId()));
+        punish(collect.get(0).getId());
         return 1;
     }
 
     public void punish(Set<Long> idSet) {
         Map<Object, String> map;
-        Stream<BanTemp> banTempStream = findAll().stream().filter(v -> idSet.contains(v.getId()));
-        if (banTempStream.count() == 0) return;
-        map = banTempStream.collect(Collectors.toMap(BanTemp::getKillerUCID, v -> "您被ban了，如有异议，请联系管理员并附带有效证据"));
+        List<BanTemp> collect = findAll().stream().filter(v -> idSet.contains(v.getId())).collect(Collectors.toList());
+        if (collect.size() == 0) return;
+
+        map = collect.stream().collect(Collectors.toMap(BanTemp::getKillerUCID, v -> "您被ban了，如有异议，请联系管理员并附带有效证据"));
         playerConnectionValidationService.blockPlayerUcid(map);
+        collect(idSet);
+        idSet.forEach(this::deleteById);
 
         BanishConfig banishConfig = banishConfigService.find();
         DateTime day = DateUtil.offsetDay(new Date(), banishConfig.getPunishTime());
@@ -173,7 +189,13 @@ public class BanTempServiceImpl extends AbstractMapService<BanTemp> implements B
         BanLog banLog = banLogDao.selectById(id);
         banLog.setNote("惩罚");
         banLogDao.updateById(banLog);
-        delete(findById(id).get());
+        collect(id);
+        try {
+            saveProof(id);
+        } catch (Exception e) {
+            log.info("******证据保存失败");
+        }
+        deleteById(id);
 
         BanishConfig banishConfig = banishConfigService.find();
         DateTime day = DateUtil.offsetDay(new Date(), banishConfig.getPunishTime());
@@ -184,19 +206,70 @@ public class BanTempServiceImpl extends AbstractMapService<BanTemp> implements B
     }
 
     @Override
-    @Scheduled(fixedDelay = 60 * 1000L)
+    @Scheduled(fixedDelay = 5 * 60 * 1000L)
     public void dispose() {
         if (getNextId() == 1) return;
 
         Date now = new Date();
         BanishConfig banishConfig = banishConfigService.find();
         DateTime preMinute = DateUtil.offsetMinute(now, -banishConfig.getThinkingTime());
-        Stream<BanTemp> banTempStream = findAll()
+        List<BanTemp> collect = findAll()
                 .stream()
-                .filter(banTemp -> !DateUtil.isIn(banTemp.getDecline(), preMinute, now));
+                .filter(banTemp -> !DateUtil.isIn(banTemp.getDecline(), preMinute, now))
+                .collect(Collectors.toList());
 
-        if (banTempStream.count() == 0) return;
+        if (collect.isEmpty()) return;
 
-        banTempStream.forEach(record -> punish(record.getId()));
+        collect.forEach(record -> punish(record.getId()));
+    }
+
+    private void collect(Long id) {
+        Ban ban = banDao.selectById(id);
+        BanishConfig banishConfig = banishConfigService.find();
+        String uuid = banishConfig.getUuid();
+        BanDto banDto = new BanDto(uuid, ban.getUcid(), ban.getIpaddr(), ban.getName());
+        banDto.setClientUUID(uuid);
+        banDto.setSign(BanishCryptUtil.sign(JSON.toJSONString(banDto)));
+        HttpUtil.post(banishConfig.getServerAddress() + "/ban/add", JSON.toJSONString(banDto), 3000);
+    }
+
+    private void collect(Set<Long> ids) {
+        List<Ban> bans = banDao.selectBatchIds(ids);
+        BanishConfig banishConfig = banishConfigService.find();
+        String uuid = banishConfig.getUuid();
+        BanishList<BanDto> banDtoList = new BanishList<>();
+        List<BanDto> banDtos = new ArrayList<>();
+        bans.forEach(ban -> {
+            BanDto banDto = new BanDto(uuid, ban.getUcid(), ban.getIpaddr(), ban.getName());
+            banDtos.add(banDto);
+        });
+        banDtoList.setList(banDtos);
+        banDtoList.setClientUUID(uuid);
+        String sign = BanishCryptUtil.sign(JSON.toJSONString(banDtoList));
+        banDtoList.setSign(sign);
+        HttpUtil.post(banishConfig.getServerAddress() + "/ban/add/batch", JSON.toJSONString(banDtoList), 3000);
+    }
+
+    private void saveProof(Long id) throws Exception {
+        Path path = DcsScriptConfigManager.LAVA_DATA_PATH
+                .resolve("addons")
+                .resolve("banish")
+                .resolve("TK证据")
+                .resolve(DateUtil.today());
+        BanTemp banTemp = findById(id).get();
+        String address = "http://localhost:8088/screenshots/";
+        String victimPhotoId = banTemp.getVictimPhotoId();
+        if (victimPhotoId != null) {
+            BufferedImage read = ImageIO.read(new URL(address + victimPhotoId));
+            File outputfile = path.resolve(victimPhotoId + ".jpg").toFile();
+            ImageIO.write(read, "jpg", outputfile);
+        }
+
+        String killerPhotoId = banTemp.getKillerPhotoId();
+        if (killerPhotoId != null) {
+            BufferedImage read = ImageIO.read(new URL(address + killerPhotoId));
+            File outputfile = path.resolve(killerPhotoId + ".jpg").toFile();
+            ImageIO.write(read, "jpg", outputfile);
+        }
     }
 }
