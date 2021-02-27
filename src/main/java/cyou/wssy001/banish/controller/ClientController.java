@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * @projectName: lava-banish
- * @className: ReceiveController
+ * @className: ClientController
  * @description:
  * @author: alexpetertyler
  * @date: 2021/2/1

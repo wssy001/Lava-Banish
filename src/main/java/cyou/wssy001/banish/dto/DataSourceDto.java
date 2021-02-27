@@ -15,7 +15,7 @@ public class DataSourceDto {
     private String username;
     private String password;
     private String databaseName;
-    private String databaseUrl;
+    private String jdbcUrl;
     private Long maxLifetime;
     private Long idleTimeout;
     private Long connectionTimeout;

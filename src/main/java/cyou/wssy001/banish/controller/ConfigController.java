@@ -1,6 +1,5 @@
 package cyou.wssy001.banish.controller;
 
-import com.alibaba.fastjson.JSON;
 import com.baomidou.dynamic.datasource.DynamicRoutingDataSource;
 import com.baomidou.dynamic.datasource.creator.HikariDataSourceCreator;
 import com.baomidou.dynamic.datasource.spring.boot.autoconfigure.DataSourceProperty;
@@ -9,6 +8,7 @@ import cyou.wssy001.banish.dto.BanishConfig;
 import cyou.wssy001.banish.dto.DataSourceDto;
 import cyou.wssy001.banish.service.BanishConfigService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/banish")
+@Slf4j
 public class ConfigController {
     private final HikariDataSourceCreator hikariDataSourceCreator;
     private final BanishConfigService banishConfigService;
@@ -35,7 +36,7 @@ public class ConfigController {
             @RequestBody BanishConfig banishConfig
     ) {
         banishConfigService.update(banishConfig);
-        return "成功!";
+        return "配置更新成功!";
     }
 
     @PostMapping("/datasource/update")
@@ -43,23 +44,20 @@ public class ConfigController {
             @RequestBody DataSourceDto dataSourceDto
     ) {
         DataSourceProperty property = new DataSourceProperty();
-        String url = environment.getProperty("banish.db.url");
-        String name = environment.getProperty("banish.db.name");
-        String username = environment.getProperty("banish.db.username");
-        String password = environment.getProperty("banish.db.password");
-        property.setUsername(username);
-        property.setPassword(password);
-        property.setUrl("jdbc:mysql://" + url + "/" + name + "?useUnicode=true&useSSL=false&autoReconnect=true&characterEncoding=utf-8&serverTimezone=GMT%2B8&rewriteBatchedStatements=true");
+
+        property.setUsername(dataSourceDto.getUsername());
+        property.setPassword(dataSourceDto.getPassword());
+        property.setUrl(dataSourceDto.getJdbcUrl() + "?useUnicode=true&useSSL=false&autoReconnect=true&characterEncoding=utf-8&serverTimezone=GMT%2B8&rewriteBatchedStatements=true");
         property.setDriverClassName("com.mysql.cj.jdbc.Driver");
-        log.info("******Banish数据源：" + JSON.toJSONString(property));
         HikariCpConfig hikariConfig = new HikariCpConfig();
-        hikariConfig.setIdleTimeout(43170000L);
-        hikariConfig.setMaxLifetime(43170000L);
+        hikariConfig.setIdleTimeout(dataSourceDto.getIdleTimeout());
+        hikariConfig.setMaxLifetime(dataSourceDto.getMaxLifetime());
         hikariConfig.setMaxPoolSize(20);
         hikariConfig.setMinIdle(5);
-        hikariConfig.setConnectionTimeout(43170000L);
+        hikariConfig.setConnectionTimeout(dataSourceDto.getConnectionTimeout());
         property.setHikari(hikariConfig);
+        ds.removeDataSource("banish");
         ds.addDataSource("banish", hikariDataSourceCreator.createDataSource(property));
-        return "";
+        return "更新数据源成功！";
     }
 }

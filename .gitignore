@@ -34,4 +34,4 @@ build/
 /.mvn/wrapper/
 /src/test/
 /src/main/resources/banish_local.sql
-/src/main/resources/application.yml
+/src/main/resources/META-INF/

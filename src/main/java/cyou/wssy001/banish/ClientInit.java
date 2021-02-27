@@ -1,12 +1,17 @@
 package cyou.wssy001.banish;
 
+import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.SmUtil;
 import cn.hutool.crypto.symmetric.SymmetricCrypto;
 import cn.hutool.http.HttpUtil;
+import cn.hutool.setting.Setting;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.dynamic.datasource.DynamicRoutingDataSource;
+import com.baomidou.dynamic.datasource.creator.HikariDataSourceCreator;
+import com.baomidou.dynamic.datasource.spring.boot.autoconfigure.DataSourceProperty;
+import com.baomidou.dynamic.datasource.spring.boot.autoconfigure.hikari.HikariCpConfig;
 import cyou.wssy001.banish.dao.BanDao;
 import cyou.wssy001.banish.dao.BanNetworkDao;
 import cyou.wssy001.banish.dao.ClientInfoDao;
@@ -23,11 +28,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import moe.ofs.backend.chatcmdnew.model.ChatCommandDefinition;
 import moe.ofs.backend.chatcmdnew.services.ChatCommandSetManageService;
+import moe.ofs.backend.connector.DcsScriptConfigManager;
 import moe.ofs.backend.discipline.service.PlayerConnectionValidationService;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
-import javax.sql.DataSource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -41,6 +46,7 @@ import java.util.stream.Collectors;
  * @date: 2021/1/15
  * @version: v1.0
  */
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -57,8 +63,8 @@ public class ClientInit {
     private final PlayerConnectionValidationService playerConnectionValidationService;
     private final ChatCommandSetManageService chatCommandSetManageService;
 
+    private final HikariDataSourceCreator hikariDataSourceCreator;
     private final DynamicRoutingDataSource ds;
-    private final DataSource banishDataSource;
     private final Environment environment;
 
     public void init() {
@@ -73,10 +79,32 @@ public class ClientInit {
 
     // 加载配置
     private void loadConfig() {
+        String path = DcsScriptConfigManager.LAVA_DATA_PATH.resolve("config").resolve("banish.setting").toString();
+        Setting setting = new Setting("banish.setting");
+        if (!FileUtil.isFile(path)) {
+            setting.set("url", "localhost:3306");
+            setting.set("dbName", "banish_local");
+            setting.set("userName", "root");
+            setting.set("password", "root");
+            setting.store(path);
+        }
 
+        DataSourceProperty property = new DataSourceProperty();
+        property.setUsername(setting.get("userName"));
+        property.setPassword(setting.get("password"));
+        String url = setting.get("url");
+        String dbName = setting.get("dbName");
+        property.setUrl("jdbc:mysql://" + url + "/" + dbName + "?useUnicode=true&useSSL=false&autoReconnect=true&characterEncoding=utf-8&serverTimezone=GMT%2B8&rewriteBatchedStatements=true");
+        property.setDriverClassName("com.mysql.cj.jdbc.Driver");
+        HikariCpConfig hikariConfig = new HikariCpConfig();
+        hikariConfig.setIdleTimeout(43170000L);
+        hikariConfig.setMaxLifetime(43170000L);
+        hikariConfig.setMaxPoolSize(20);
+        hikariConfig.setMinIdle(5);
+        hikariConfig.setConnectionTimeout(43170000L);
+        property.setHikari(hikariConfig);
 
-
-        ds.addDataSource("banish", banishDataSource);
+        ds.addDataSource("banish", hikariDataSourceCreator.createDataSource(property));
 
         List<ClientInfo> clientInfos = clientInfoDao.selectList(null);
         if (clientInfos.size() != 1) {
